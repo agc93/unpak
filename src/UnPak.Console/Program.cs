@@ -1,6 +1,8 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
+using Spectre.Console.Cli;
 using UnPak.Core;
 using static System.Console;
 
@@ -8,7 +10,19 @@ namespace UnPak.Console
 {
     class Program
     {
-        static void Main(string[] args) {
+        static async Task<int> Main(string[] args) {
+            var app = Startup.GetApp();
+            // var app = new CommandApp(new DependencyInjectionRegistrar(Startup.GetServices()));
+            app.SetDefaultCommand<IndexCommand>();
+            /* app.Configure(c => {
+                c.SetApplicationName("acmi-pack");
+                c.AddCommand<PackCommand>("pack");
+                c.AddCommand<InfoCommand>("info");
+                c.AddCommand<InstanceCommand>("instance");
+            }); */
+            return await app.RunAsync(args);
+        }
+        static void MainEx(string[] args) {
             var fi = new FileInfo(@"X:/Staging/Screenshot Mode_P.pak");
             using var fs = fi.OpenRead();
             var readerProvider = new PakFileProvider(new[] {new PakVersion3Format()}, null);

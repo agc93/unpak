@@ -4,9 +4,28 @@
     <ProjectReference Include="..\UnPak.Core\UnPak.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Humanizer.Core" Version="2.10.1" />
+    <PackageReference Include="NReco.Logging.File" Version="1.1.1" />
+    <PackageReference Include="Scrutor" Version="3.3.0" />
+    <PackageReference Include="Spectre.Cli.AppInfo" Version="0.2.0" />
+    <PackageReference Include="Spectre.Cli.Extensions.DependencyInjection" Version="0.4.0" />
+    <PackageReference Include="Spectre.Console" Version="0.38.0" />
+    <PackageReference Include="Spectre.Console.Extensions.Logging" Version="0.2.2-preview.0.5" />
+  </ItemGroup>
+
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <IsPublishable>true</IsPublishable>
+    <DebugType>Embedded</DebugType>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <AssemblyName>upk</AssemblyName>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <TrimMode>Link</TrimMode>
   </PropertyGroup>
 
 </Project>

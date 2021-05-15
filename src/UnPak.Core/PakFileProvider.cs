@@ -8,9 +8,12 @@ namespace UnPak.Core
         private IEnumerable<IPakFormat> _formats;
         private PakLayoutOptions? _opts;
 
-        public PakFileProvider(IEnumerable<IPakFormat> pakFormats, PakLayoutOptions? opts) {
-            _formats = pakFormats;
+        public PakFileProvider(IEnumerable<IPakFormat> pakFormats, PakLayoutOptions opts) : this(pakFormats) {
             _opts = opts;
+        }
+        
+        public PakFileProvider(IEnumerable<IPakFormat> pakFormats) {
+            _formats = pakFormats;
         }
 
         public PakFileReader GetReader(FileStream fileStream, PakLayoutOptions opts = null) {

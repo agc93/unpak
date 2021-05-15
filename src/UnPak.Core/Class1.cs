@@ -148,7 +148,7 @@ namespace UnPak.Core
             _opts = opts ?? new PakLayoutOptions();
         }
 
-        public void BuildFromDirectory(DirectoryInfo srcPath, FileInfo outputFile, PakFileCreationOptions opts = null) {
+        public FileInfo BuildFromDirectory(DirectoryInfo srcPath, FileInfo outputFile, PakFileCreationOptions opts = null) {
             opts ??= new PakFileCreationOptions();
             using var outputStream = outputFile.OpenWrite();
             var files = srcPath.EnumerateFiles("*", SearchOption.AllDirectories).ToList();
@@ -156,6 +156,7 @@ namespace UnPak.Core
             var inputFiles = files.ToDictionary(f => Path.GetRelativePath(srcPath.Parent.FullName, f.FullName), f => f);
             var records = WriteDataFiles(inputFiles, outputStream, opts);
             WriteIndex(outputStream, records, opts);
+            return new FileInfo(outputFile.FullName);
         }
 
         public void BuildFromFiles(Dictionary<string, FileInfo> files, FileInfo outputFile,
@@ -219,6 +220,8 @@ namespace UnPak.Core
         private BinaryReader _reader { get; }
         private FileStream _stream { get; }
         private PakLayoutOptions _layout { get; } = new PakLayoutOptions();
+
+        public FileStream BackingFile => _stream;
         
 
         public PakFileReader(FileStream fileStream, IEnumerable<IPakFormat> pakFormats, PakLayoutOptions opts) {
@@ -251,8 +254,10 @@ namespace UnPak.Core
             return pak;
         }
 
-        public void UnpackFile(PakFile file = null) {
+        public List<FileInfo> UnpackTo(DirectoryInfo targetPath, PakFile file = null) {
             file ??= ReadFile();
+            var unpack = file.UnpackAll(_stream, targetPath).ToList();
+            return unpack;
         }
 
         private IPakFormat GetFormat(FileFooter footer) {
