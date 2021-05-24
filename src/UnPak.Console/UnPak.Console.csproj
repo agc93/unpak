@@ -7,6 +7,7 @@
   <ItemGroup>
     <PackageReference Include="DebounceThrottle" Version="1.0.0" />
     <PackageReference Include="Humanizer.Core" Version="2.10.1" />
+    <PackageReference Include="JetBrains.Profiler.Api" Version="1.1.7" />
     <PackageReference Include="NReco.Logging.File" Version="1.1.1" />
     <PackageReference Include="Scrutor" Version="3.3.0" />
     <PackageReference Include="Spectre.Cli.AppInfo" Version="0.2.0" />
@@ -27,6 +28,18 @@
     <AssemblyName>upk</AssemblyName>
     <InvariantGlobalization>true</InvariantGlobalization>
     <TrimMode>Link</TrimMode>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>upk</ToolCommandName>
+    <PackageProjectUrl>https://github.com/agc93/unpak</PackageProjectUrl>
+    <PackageDescription>A .NET Core global tool for packing and unpacking </PackageDescription>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <Title>Nexus Uploader</Title>
+    <Authors>agc93</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageId>NexusUploader</PackageId>
   </PropertyGroup>
 
 </Project>

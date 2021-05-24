@@ -4,16 +4,20 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using UnPak.Core.Crypto;
+using UnPak.Core.Diagnostics;
 
 namespace UnPak.Core
 {
     public class PakFileWriter
     {
         private readonly IEnumerable<IPakFormat> _formats;
+        private readonly IHashProvider _hashProvider;
         private PakLayoutOptions _opts;
 
-        public PakFileWriter(IEnumerable<IPakFormat> pakFormats, PakLayoutOptions opts) {
+        public PakFileWriter(IEnumerable<IPakFormat> pakFormats, IHashProvider hashProvider, PakLayoutOptions? opts) {
             _formats = pakFormats;
+            _hashProvider = hashProvider;
             _opts = opts ?? new PakLayoutOptions();
         }
 
@@ -35,7 +39,10 @@ namespace UnPak.Core
         }
 
         public Dictionary<string, byte[]> WriteDataFiles(Dictionary<string, FileInfo> srcFiles, FileStream outputStream, PakFileCreationOptions opts) {
-            var format = _formats.GetFormat(opts.ArchiveVersion);
+            var format = _formats.GetFormat(SupportedOperations.Pack, opts.ArchiveVersion);
+            if (format == null) {
+                throw new FormatNotSupportedException(opts.ArchiveVersion);
+            }
             
             var records = new Dictionary<string, byte[]>();
             using var writer = new BinaryWriter(outputStream, Encoding.ASCII, true);
@@ -50,7 +57,6 @@ namespace UnPak.Core
 
         private void WriteIndex(Stream outWriter, Dictionary<string, byte[]> records, PakFileCreationOptions opts) {
             var indexOffset = outWriter.Position;
-            using var sha1 = new SHA1Managed();
             using var indexStream = new MemoryStream();
             var mountPoint = opts.MountPoint.EncodePath();
             var recordLength = BitConverter.GetBytes(records.Count);
@@ -62,7 +68,7 @@ namespace UnPak.Core
                 indexStream.Write(pathBytes);
                 indexStream.Write(indexRecord);
             }
-            var indexHash = sha1.ComputeHash(indexStream);
+            var indexHash = _hashProvider.GetSha1Hash(indexStream);
             using var footerStream = new MemoryStream();
             using var writer = new BinaryWriter(footerStream, Encoding.UTF8, true);
             writer.WriteUInt32(opts.Magic);

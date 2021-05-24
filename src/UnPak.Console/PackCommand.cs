@@ -25,7 +25,7 @@ namespace UnPak.Console
                 try {
                     if (!DisableAutoRoot.IsSet || !DisableAutoRoot.Value) {
                         var packRoot = dirSrv.GetPackRoot(new DirectoryInfo(FileRootPath));
-                        FileRootPath = packRoot.FullName;
+                        //FileRootPath = packRoot.FullName;
                         if (!TargetFilePath.IsSet || string.IsNullOrWhiteSpace(TargetFilePath.Value)) {
                             TargetFilePath.Value = dirSrv.GetTargetName(packRoot);
                         }

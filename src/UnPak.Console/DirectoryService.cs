@@ -12,7 +12,7 @@ namespace UnPak.Console
         }
 
         public string GetTargetName(DirectoryInfo packDir) {
-            return packDir.Parent?.Name;
+            return $"{packDir.Parent?.Name}.pak";
         }
     }
 }

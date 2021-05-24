@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using UnPak.Core.Diagnostics;
 
 namespace UnPak.Core
 {
@@ -11,8 +12,7 @@ namespace UnPak.Core
         private IEnumerable<IPakFormat> _formats;
         private BinaryReader _reader { get; }
         private FileStream _stream { get; }
-        private PakLayoutOptions _layout { get; } = new PakLayoutOptions();
-
+        private PakLayoutOptions _layout { get; }
         public FileStream BackingFile => _stream;
         
 
@@ -28,9 +28,9 @@ namespace UnPak.Core
             _stream.Seek(footer.IndexOffset, SeekOrigin.Begin);
             var mountPoint = _reader.ReadUEString(true);
             var entryCount = _reader.ReadUInt32();
-            var format = GetFormat(footer);
+            var format = _formats.GetFormat(SupportedOperations.Unpack, footer);
             if (format == null) {
-                throw new InvalidOperationException($"No matching format for version '{footer.Version}' found!");
+                throw new FormatNotSupportedException(footer.Version);
             }
             var pak = new PakFile(mountPoint, footer);
             for (int i = 0; i < entryCount; i++) {
@@ -41,7 +41,7 @@ namespace UnPak.Core
 
             if (_stream.Position > footer.FooterOffset) {
                 // this doesn't feel like it should be possible, but u4pak handles it so here we are
-                throw new InvalidDataException("Index is too long and collides with footer!");
+                throw new FileStructureException("Index is too long and collides with footer!");
             }
             return pak;
         }
@@ -52,12 +52,7 @@ namespace UnPak.Core
             return unpack;
         }
 
-        private IPakFormat GetFormat(FileFooter footer) {
-            return _formats.FirstOrDefault(f =>
-                f.Version == footer.Version && (f.Magic ?? _layout.Magic) == footer.Magic);
-        }
-
-        public FileFooter ReadFooter() {
+        private FileFooter ReadFooter() {
             var curr = _stream.Position;
             _stream.Seek(-_layout.FooterLength, SeekOrigin.End);
             var footerOffset = _stream.Position;

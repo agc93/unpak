@@ -34,6 +34,14 @@ namespace UnPak.Console
             var services = new ServiceCollection();
             services.AddSingleton<AppInfoService>();
             services.AddRuntimeServices();
+            if (OperatingSystem.IsWindows()) {
+                services.AddSingleton<UnPak.Core.Crypto.IHashProvider, UnPak.Core.Crypto.NativeHashProvider>();    
+            }
+            else {
+                services.AddSingleton<UnPak.Core.Crypto.IHashProvider, UnPak.Core.Crypto.ManagedHashProvider>();
+            }
+            
+            
             services.AddSingleton<IAnsiConsole>(p => {
                 return AnsiConsole.Create(
                     new AnsiConsoleSettings {

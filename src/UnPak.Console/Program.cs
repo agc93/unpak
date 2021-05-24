@@ -11,19 +11,24 @@ namespace UnPak.Console
     class Program
     {
         static async Task<int> Main(string[] args) {
+            //WriteLine(string.Join(Environment.NewLine, args));
+            JetBrains.Profiler.Api.MeasureProfiler.StartCollectingData();
             var app = Startup.GetApp();
             // var app = new CommandApp(new DependencyInjectionRegistrar(Startup.GetServices()));
             app.SetDefaultCommand<IndexCommand>();
+            // JetBrains.Profiler.Api.MeasureProfiler.StartCollectingData("Run");
             /* app.Configure(c => {
                 c.SetApplicationName("acmi-pack");
                 c.AddCommand<PackCommand>("pack");
                 c.AddCommand<InfoCommand>("info");
                 c.AddCommand<InstanceCommand>("instance");
             }); */
-            return await app.RunAsync(args);
+            var ret = await app.RunAsync(args);
+            JetBrains.Profiler.Api.MeasureProfiler.SaveData();
+            return ret;
         }
         static void MainEx(string[] args) {
-            var fi = new FileInfo(@"X:/Staging/Screenshot Mode_P.pak");
+            /*var fi = new FileInfo(@"X:/Staging/Screenshot Mode_P.pak");
             using var fs = fi.OpenRead();
             var readerProvider = new PakFileProvider(new[] {new PakVersion3Format()}, null);
             var reader = readerProvider.GetReader(fs);
@@ -47,7 +52,7 @@ namespace UnPak.Console
                 var diu = new DirectoryInfo(@"X:\Tools\u4pak-test\upk");
                 var reFile = reReader.ReadFile();
                 var repacks = reFile.UnpackAll(upFile.OpenRead(), diu).ToList();
-            }
+            }*/
         }
     }
 }
