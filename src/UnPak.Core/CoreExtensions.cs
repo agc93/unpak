@@ -16,5 +16,12 @@ namespace UnPak.Core
             
             return pakFormats.FirstOrDefault(f => f.Versions.Any(v => v== version) && f.Supports.HasFlag(operation));
         }
+
+        public static IEnumerable<CompressionBlock> OffsetBy(this IEnumerable<CompressionBlock> blocks, ulong offset) {
+            return blocks.Select(block => new CompressionBlock {
+                StartOffset = block.StartOffset + offset,
+                EndOffset = block.EndOffset + offset
+            });
+        }
     }
 }

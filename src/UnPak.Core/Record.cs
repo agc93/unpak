@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
+using System.Linq;
+using UnPak.Core.Compression;
 
 namespace UnPak.Core
 {
@@ -15,7 +18,7 @@ namespace UnPak.Core
         public ulong RawSize { get; init; }
         public CompressionMethod CompressionMethod { get; init; }
         public byte[] Hash { get; init; }
-        public List<Block> Blocks { get; } = new List<Block>();
+        public List<CompressionBlock>? Blocks { get; init; } = new List<CompressionBlock>();
         public bool Encrypted { get; init; }
         public uint CompressionBlockSize { get; init; }
         public ulong HeaderSize { get; }
@@ -26,15 +29,40 @@ namespace UnPak.Core
             var tgtBasePath = Path.Combine(unpackRoot.FullName, Path.GetDirectoryName(FileName));
             var di = Directory.CreateDirectory(tgtBasePath);
             var tgtPath = Path.Combine(di.FullName, Path.GetFileName(FileName));
-            if (CompressionMethod == CompressionMethod.None) {
-                using var outFs = new FileStream(tgtPath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
-                pakFile.Seek((long) DataOffset, SeekOrigin.Begin);
-                pakFile.CopyStream(outFs, (long) RawSize);
-                outFs.Flush();
+            using var outFs = new FileStream(tgtPath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
+            switch (CompressionMethod) {
+                case CompressionMethod.None:
+                {
+                    
+                    pakFile.Seek((long) DataOffset, SeekOrigin.Begin);
+                    pakFile.CopyStream(outFs, (long) RawSize);
+                    outFs.Flush();
+                    break;
+                }
+                case CompressionMethod.Zlib:
+                {
+                    if (Blocks == null || !Blocks.Any()) {
+                        throw new InvalidDataException("No compression blocks available for compressed record!");
+                    }
+                    //pakFile.Seek(DataOffset, SeekOrigin.Begin);
+                    //using var bReader = new BinaryReader(pakFile);
+                    
+                    foreach (var compressionBlock in Blocks) {
+                        var blockSize = (int) (compressionBlock.EndOffset - compressionBlock.StartOffset);
+                        pakFile.Seek(DataOffset + (long) compressionBlock.StartOffset, SeekOrigin.Begin);
+                        using var memStream = new MemoryStream(blockSize);
+                        pakFile.CopyStream(memStream, blockSize);
+                        outFs.Write(ZlibCompressionProvider.DecompressBytes(memStream.ToArray()));
+                        // using var dfStream = new DeflateStream(memStream, CompressionMode.Decompress, true);
+                        // dfStream.CopyTo(outFs);
+                    }
+                    outFs.Flush();
+                    break;
+                }
+                default:
+                    throw new NotImplementedException();
             }
-            else {
-                throw new NotImplementedException("Compression not supported!");
-            }
+            outFs.Flush(true);
 
             return new FileInfo(tgtPath);
         }

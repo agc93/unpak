@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using UnPak.Core.Compression;
 using UnPak.Core.Crypto;
 
 namespace UnPak.Core
@@ -13,10 +15,7 @@ namespace UnPak.Core
         public abstract IEnumerable<int> Versions { get; }
         public virtual uint? Magic => null;
         public abstract Record ReadRecord(BinaryReader binaryReader, string fileName);
-        public abstract byte[] WriteRecord(BinaryWriter binaryWriter, ArchiveFile file, bool isEncrypted);
-
-        public abstract Record WriteCompressedRecord(BinaryWriter binaryWriter, FileInfo file, bool isEncrypted, CompressionMethod compression,
-            uint compressionBlockSize);
+        public abstract byte[] WriteRecord(BinaryWriter binaryWriter, ArchiveFile file, bool isEncrypted, PackageCompression? compression);
     }
 
     public class PakVersion4Format : IPakFormat
@@ -47,12 +46,7 @@ namespace UnPak.Core
             };
         }
 
-        public byte[] WriteRecord(BinaryWriter binaryWriter, ArchiveFile archiveFile, bool isEncrypted) {
-            throw new NotImplementedException();
-        }
-
-        public Record WriteCompressedRecord(BinaryWriter binaryWriter, FileInfo file, bool isEncrypted, CompressionMethod compression,
-            uint compressionBlockSize) {
+        public byte[] WriteRecord(BinaryWriter binaryWriter, ArchiveFile file, bool isEncrypted, PackageCompression? compression) {
             throw new NotImplementedException();
         }
     }
@@ -78,6 +72,7 @@ namespace UnPak.Core
             var blocks = GetBlocks(compression, streamReader);
             var encrypted = streamReader.ReadChar();
             var blockSize = streamReader.ReadUInt32();
+            var compressionBlocks = blocks.ToList();
             return new Record(53) {
                 FileName = fileName,
                 RecordOffset = offset,
@@ -86,16 +81,12 @@ namespace UnPak.Core
                 CompressionMethod = compression,
                 Hash = hash,
                 Encrypted = encrypted != 0,
-                CompressionBlockSize = blockSize
+                CompressionBlockSize = blockSize,
+                Blocks = compressionBlocks.Any() ? compressionBlocks.ToList() : null
             };
         }
 
-        public Record WriteCompressedRecord(BinaryWriter binaryWriter, FileInfo file, bool isEncrypted, CompressionMethod compression,
-            uint compressionBlockSize) {
-            throw new NotImplementedException();
-        }
-
-        public byte[] WriteRecord(BinaryWriter binaryWriter, ArchiveFile archiveFile, bool isEncrypted) {
+        public byte[] WriteRecord(BinaryWriter binaryWriter, ArchiveFile archiveFile, bool isEncrypted, PackageCompression? compression) {
             var file = archiveFile.File;
             var curr = binaryWriter.BaseStream.Position;
             //var size = file.Length;
@@ -103,20 +94,57 @@ namespace UnPak.Core
             var hash = _hashProvider.GetSha1Hash(file);
             using var tgtStream = new MemoryStream((int) (53 + file.Length));
             using var writer = new BinaryWriter(tgtStream, Encoding.ASCII, true);
-            var header = GetIndexRecord(0, (file.Length, file.Length), hash, CompressionMethod.None, isEncrypted, 0);
-            writer.Write(header);
-            writer.WriteFile(file);
-            writer.Flush();
-            //tgtStream.CopyTo(binaryWriter.BaseStream);
-            var dataRecord = tgtStream.ToArray();
-            binaryWriter.Write(dataRecord);
             
-            var indexRecord = GetIndexRecord(curr, (file.Length, file.Length), hash, CompressionMethod.None, isEncrypted, 0);
-            return indexRecord;
+            switch (compression?.Method) {
+                case null:
+                case CompressionMethod.None:
+                {
+                    // using var tgtStream = new MemoryStream((int) (53 + file.Length));
+                    // using var writer = new BinaryWriter(tgtStream, Encoding.ASCII, true);
+                    var header = GetIndexRecord(0, (file.Length, file.Length), hash, compression?.Method ?? CompressionMethod.None, 0, isEncrypted);
+                    writer.Write(header);
+                    writer.WriteFile(file);
+                    writer.Flush();
+                    tgtStream.CopyTo(binaryWriter.BaseStream);
+                     var dataRecord = tgtStream.ToArray();
+                     binaryWriter.Write(dataRecord);
+            
+                    var indexRecord = GetIndexRecord(curr, (file.Length, file.Length), hash, CompressionMethod.None, 0, isEncrypted);
+                    return indexRecord;
+                }
+                case CompressionMethod.Zlib:
+                {
+                    var zlib = new ZlibCompressionProvider(compression);
+                    using var fs = zlib.GetStream(file);
+                    var compressedData = zlib.CompressFile(fs, 0).ToList();
+                    var compressedSize = compressedData.Sum(d => d.Value.Length);
+                    var blocks = compressedData.Select(c => c.Key).ToList();
+                    var fileLength = ((long) compressedSize, file.Length);
+                    var firstOffset = (ulong) (curr + 53 + 4 + blocks.Count * 16);
+                    // that's the current position + header + block count + (each block start:end pair is 16 bytes)
+                    blocks = blocks.OffsetBy(firstOffset).ToList();
+                    var compDataStr = new MemoryStream();
+                    foreach (var pair in compressedData) {
+                        compDataStr.Write(pair.Value);
+                    }
+                    var blockHash = _hashProvider.GetSha1Hash(compDataStr);
+                    var compHeader = GetIndexRecord(0, fileLength, blockHash,
+                        compression.Method, (uint) zlib.BlockSize, isEncrypted, blocks);
+                    writer.Write(compHeader);
+                    writer.Write(compDataStr.ToArray());
+                    var cDataRecord = tgtStream.ToArray();
+                    binaryWriter.Write(cDataRecord);
+                    var compRecord = GetIndexRecord(curr, fileLength, blockHash, zlib.Method, (uint) zlib.BlockSize,
+                        isEncrypted, blocks);
+                    return compRecord;
+                }
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(compression));
+            }
         }
 
-        private byte[] GetIndexRecord(long offset, (long compressedLength, long rawLength) size, byte[] hash, CompressionMethod compressionMethod,
-            bool isEncrypted, uint compressionBlockSize) {
+        private byte[] GetIndexRecord(long offset, (long compressedLength, long rawLength) size, byte[] hash, CompressionMethod compressionMethod, uint compressionBlockSize,
+            bool isEncrypted, IEnumerable<CompressionBlock> blocks = null) {
             using var tgtStream = new MemoryStream();
             using var writer = new BinaryWriter(tgtStream, Encoding.ASCII);
             writer.WriteUInt64((ulong) offset);
@@ -124,19 +152,31 @@ namespace UnPak.Core
             writer.WriteInt64(size.rawLength);
             writer.WriteUInt32((uint) compressionMethod); // compression method
             writer.Write(hash);
+            if (compressionMethod != CompressionMethod.None && blocks != null) {
+                writer.WriteUInt32((uint) blocks.Count());
+                foreach (var block in blocks) {
+                    writer.WriteUInt64(block.StartOffset);
+                    writer.WriteUInt64(block.EndOffset);
+                }
+            }
             writer.Write((byte)(isEncrypted ? 0x01 : 0x00)); //encryption
             writer.WriteUInt32(compressionBlockSize); //compression block size
             writer.Flush();
             return tgtStream.ToArray();
         }
 
-        private Dictionary<int, int> GetBlocks(CompressionMethod method, BinaryReader streamReader) {
+        private IEnumerable<CompressionBlock> GetBlocks(CompressionMethod method, BinaryReader streamReader) {
             switch (method) {
                 case CompressionMethod.None:
-                    return new Dictionary<int, int>();
+                    yield break;
                 case CompressionMethod.Zlib:
                     var blockCount = streamReader.ReadUInt32();
-                    throw new NotImplementedException();
+                    for (int i = 0; i < blockCount; i++) {
+                        yield return new CompressionBlock {
+                            StartOffset = streamReader.ReadUInt64(),
+                            EndOffset = streamReader.ReadUInt64()
+                        };
+                    }
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(method), method, null);

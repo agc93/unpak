@@ -23,7 +23,8 @@ namespace UnPak.Core
 
         public FileInfo BuildFromDirectory(DirectoryInfo srcPath, FileInfo outputFile, PakFileCreationOptions opts = null) {
             opts ??= new PakFileCreationOptions();
-            using var outputStream = outputFile.OpenWrite();
+            using var outputStream =
+                new FileStream(outputFile.FullName, FileMode.Create, FileAccess.ReadWrite, FileShare.Read);
             var files = srcPath.EnumerateFiles("*", SearchOption.AllDirectories).ToList();
             files = files.OrderBy(f => f.Name).ToList();
             var inputFiles = files.ToDictionary(f => Path.GetRelativePath(srcPath.Parent.FullName, f.FullName), f => f);
@@ -48,7 +49,7 @@ namespace UnPak.Core
             using var writer = new BinaryWriter(outputStream, Encoding.ASCII, true);
             foreach (var (relPath, fileInfo) in srcFiles) {
                 var file = new ArchiveFile { File = fileInfo, Path = relPath };
-                var record = format.WriteRecord(writer, file, false);
+                var record = format.WriteRecord(writer, file, false, opts?.Compression);
                 records.Add(relPath, record);
             }
 
