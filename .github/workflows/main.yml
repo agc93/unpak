@@ -31,7 +31,9 @@ jobs:
       - name: Run the Cake script
         uses: cake-build/cake-action@v1
         with:
-          target: Publish
+          target: Release
+        env:
+          NUGET_TOKEN: ${{secrets.NUGET_TOKEN}}
       - uses: actions/upload-artifact@v1
         name: Upload Artifacts
         with:
