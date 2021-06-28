@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Text;
 using UnPak.Core.Compression;
 using UnPak.Core.Crypto;
+using static UnPak.Core.FormatHelpers;
 
 namespace UnPak.Core
 {
@@ -58,7 +58,7 @@ namespace UnPak.Core
         public PakVersion3Format(IHashProvider hashProvider) {
             _hashProvider = hashProvider;
         }
-        public SupportedOperations Supports => SupportedOperations.Pack | SupportedOperations.Unpack;
+        public SupportedOperations Supports => SupportedOperations.Write | SupportedOperations.Read;
         public virtual IEnumerable<int> Versions => new[] {3, 7};
         public uint? Magic => null;
 
@@ -165,22 +165,6 @@ namespace UnPak.Core
             return tgtStream.ToArray();
         }
 
-        private IEnumerable<CompressionBlock> GetBlocks(CompressionMethod method, BinaryReader streamReader) {
-            switch (method) {
-                case CompressionMethod.None:
-                    yield break;
-                case CompressionMethod.Zlib:
-                    var blockCount = streamReader.ReadUInt32();
-                    for (int i = 0; i < blockCount; i++) {
-                        yield return new CompressionBlock {
-                            StartOffset = streamReader.ReadUInt64(),
-                            EndOffset = streamReader.ReadUInt64()
-                        };
-                    }
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(method), method, null);
-            }
-        }
+        
     }
 }

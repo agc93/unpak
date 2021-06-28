@@ -7,7 +7,7 @@ namespace UnPak.Core
 {
     public static class CoreExtensions
     {
-        public static IPakFormat? GetFormat(this IEnumerable<IPakFormat> pakFormats, SupportedOperations operation, FileFooter footer, PakLayoutOptions opts = null) {
+        public static IPakFormat? GetFormat(this IEnumerable<IPakFormat> pakFormats, SupportedOperations operation, FileFooter footer, PakLayoutOptions opts) {
             return pakFormats.FirstOrDefault(f =>
                 f.Versions.Any(v=> v == footer.Version) && (f.Magic ?? opts.Magic) == footer.Magic && f.Supports.HasFlag(operation));
         }

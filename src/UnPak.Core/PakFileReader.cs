@@ -10,29 +10,33 @@ namespace UnPak.Core
     public class PakFileReader : IDisposable
     {
         private IEnumerable<IPakFormat> _formats;
+        private readonly IEnumerable<IFooterLayout> _footerFormats;
         private BinaryReader _reader { get; }
         private FileStream _stream { get; }
         private PakLayoutOptions _layout { get; }
-        public FileStream BackingFile => _stream;
-        
 
-        public PakFileReader(FileStream fileStream, IEnumerable<IPakFormat> pakFormats, PakLayoutOptions opts) {
+
+        public PakFileReader(FileStream fileStream, IEnumerable<IPakFormat> pakFormats, IEnumerable<IFooterLayout> footerFormats, PakLayoutOptions opts) {
             _stream = fileStream;
             _reader = new BinaryReader(_stream, Encoding.ASCII);
             _layout = opts ?? new PakLayoutOptions();
             _formats = pakFormats;
+            _footerFormats = footerFormats;
         }
 
         public PakFile ReadFile() {
             var footer = ReadFooter();
+            if (footer == null) {
+                throw new InvalidDataException("Could not read footer layout!");
+            }
             _stream.Seek(footer.IndexOffset, SeekOrigin.Begin);
             var mountPoint = _reader.ReadUEString(true);
             var entryCount = _reader.ReadUInt32();
-            var format = _formats.GetFormat(SupportedOperations.Unpack, footer);
+            var format = _formats.GetFormat(SupportedOperations.Read, footer, _layout);
             if (format == null) {
                 throw new FormatNotSupportedException(footer.Version);
             }
-            var pak = new PakFile(mountPoint, footer);
+            var pak = new PakFile(mountPoint, footer, _stream);
             for (int i = 0; i < entryCount; i++) {
                 var fileName = _reader.ReadPath();
                 var record = format.ReadRecord(_reader, fileName);
@@ -46,30 +50,15 @@ namespace UnPak.Core
             return pak;
         }
 
+        public FileFooter? ReadFooter() {
+            return _footerFormats.Select(footerFormat => footerFormat.ReadFooter(_reader, _layout))
+                .FirstOrDefault(footer => footer != null && footer.Version != 0);
+        }
+
         public List<FileInfo> UnpackTo(DirectoryInfo targetPath, PakFile file = null) {
             file ??= ReadFile();
             var unpack = file.UnpackAll(_stream, targetPath).ToList();
             return unpack;
-        }
-
-        private FileFooter ReadFooter() {
-            var curr = _stream.Position;
-            _stream.Seek(-_layout.FooterLength, SeekOrigin.End);
-            var footerOffset = _stream.Position;
-            var magic = _reader.ReadUInt32();
-            var version = _reader.ReadUInt32();
-            var indexOffset = _reader.ReadUInt64();
-            var indexSize = _reader.ReadUInt64();
-            var hash = _reader.ReadChars(_layout.HashLength);
-            _stream.Seek(curr, SeekOrigin.Begin);
-            return new FileFooter {
-                Magic = magic,
-                Version = version,
-                IndexOffset = (long) indexOffset,
-                IndexLength = indexSize,
-                FooterOffset = footerOffset,
-                IndexHash = new string(hash)
-            };
         }
 
         protected virtual void Dispose(bool disposing) {

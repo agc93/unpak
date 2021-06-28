@@ -9,15 +9,16 @@ namespace UnPak.Core
     {
         private IEnumerable<IPakFormat> _formats;
         private readonly IHashProvider? _hashProvider;
+        private readonly IEnumerable<IFooterLayout> _footerLayouts;
         private PakLayoutOptions? _opts;
 
-        public PakFileProvider(IEnumerable<IPakFormat> pakFormats, IHashProvider hashProvider, PakLayoutOptions opts) : this(pakFormats, hashProvider) {
-            
+        public PakFileProvider(IEnumerable<IPakFormat> pakFormats, IEnumerable<IFooterLayout> footerLayouts, IHashProvider hashProvider, PakLayoutOptions opts) : this(pakFormats, footerLayouts, hashProvider) {
             _opts = opts;
         }
         
-        public PakFileProvider(IEnumerable<IPakFormat> pakFormats, IHashProvider hashProvider) : this(pakFormats) {
+        public PakFileProvider(IEnumerable<IPakFormat> pakFormats, IEnumerable<IFooterLayout> footerLayouts, IHashProvider hashProvider) : this(pakFormats) {
             _hashProvider = hashProvider;
+            _footerLayouts = footerLayouts;
         }
 
         public PakFileProvider(IEnumerable<IPakFormat> pakFormats) {
@@ -25,11 +26,11 @@ namespace UnPak.Core
         }
 
         public PakFileReader GetReader(FileStream fileStream, PakLayoutOptions opts = null) {
-            return new(fileStream, _formats, opts ?? _opts);
+            return new(fileStream, _formats, _footerLayouts, opts ?? _opts);
         }
         
         public PakFileReader GetReader(FileInfo fileInfo, PakLayoutOptions opts = null) {
-            return new(fileInfo.OpenRead(), _formats, opts ?? _opts);
+            return new(fileInfo.OpenRead(), _formats, _footerLayouts, opts ?? _opts);
         }
         
         public PakFileWriter GetWriter(PakLayoutOptions opts = null) {

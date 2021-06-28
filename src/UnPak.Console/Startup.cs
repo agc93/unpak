@@ -70,6 +70,7 @@ namespace UnPak.Console
             {
                 scan.FromAssemblyOf<PakFileProvider>()
                     .AddClasses(classes => classes.AssignableTo<IPakFormat>()).AsImplementedInterfaces()
+                    .AddClasses(classes => classes.AssignableTo<IFooterLayout>()).AsImplementedInterfaces()
                     .WithSingletonLifetime();
             });
             return services;

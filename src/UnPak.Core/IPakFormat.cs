@@ -17,7 +17,7 @@ namespace UnPak.Core
     public enum SupportedOperations
     {
         None = 0,
-        Pack = 1,
-        Unpack = 2
+        Write = 1,
+        Read = 2
     }
 }

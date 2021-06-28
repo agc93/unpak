@@ -8,5 +8,6 @@
         public long IndexOffset { get; init; }
         public ulong IndexLength { get; init; }
         public string IndexHash { get; init; }
+        public byte[] RawIndexHash { get; init; }
     }
 }

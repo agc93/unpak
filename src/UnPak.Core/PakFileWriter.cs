@@ -40,7 +40,7 @@ namespace UnPak.Core
         }
 
         public Dictionary<string, byte[]> WriteDataFiles(Dictionary<string, FileInfo> srcFiles, FileStream outputStream, PakFileCreationOptions opts) {
-            var format = _formats.GetFormat(SupportedOperations.Pack, opts.ArchiveVersion);
+            var format = _formats.GetFormat(SupportedOperations.Write, opts.ArchiveVersion);
             if (format == null) {
                 throw new FormatNotSupportedException(opts.ArchiveVersion);
             }

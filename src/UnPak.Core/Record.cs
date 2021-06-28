@@ -24,7 +24,7 @@ namespace UnPak.Core
         public ulong HeaderSize { get; }
         public long DataOffset => (long) (RecordOffset + HeaderSize);
 
-        public FileInfo Unpack(FileStream pakFile, DirectoryInfo unpackRoot) {
+        public FileInfo Unpack(Stream pakFile, DirectoryInfo unpackRoot) {
             // using var sr = new StreamReader(pakFile, leaveOpen:true);
             var tgtBasePath = Path.Combine(unpackRoot.FullName, Path.GetDirectoryName(FileName));
             var di = Directory.CreateDirectory(tgtBasePath);
