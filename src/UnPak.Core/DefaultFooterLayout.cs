@@ -9,7 +9,7 @@ namespace UnPak.Core
         public int FooterLength => 44;
         public FileFooter ReadFooter(BinaryReader reader, PakLayoutOptions? options) {
             var curr = reader.BaseStream.Position;
-            reader.BaseStream.Seek(-(FooterLength + 20), SeekOrigin.End);
+            reader.BaseStream.Seek(-20, SeekOrigin.End);
             var temphash = reader.ReadChars(20);
             if (temphash.Any(hc => hc == 0x0)) {
                 //this ain't it chief

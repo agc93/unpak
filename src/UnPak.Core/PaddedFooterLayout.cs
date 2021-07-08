@@ -15,8 +15,7 @@ namespace UnPak.Core
             if (temphash.All(hc => hc != 0x0)) {
                 //128-bit padded
                 reader.BaseStream.Seek(-(128 + HashLength) , SeekOrigin.End);
-            }
-            else {
+            } else {
                 reader.BaseStream.Seek(-(160 + HashLength), SeekOrigin.End);
                 temphash = reader.ReadChars(20);
                 if (temphash.Any(hc => hc == 0x0)) return null;
