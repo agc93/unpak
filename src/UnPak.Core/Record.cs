@@ -24,19 +24,14 @@ namespace UnPak.Core
         public ulong HeaderSize { get; }
         public long DataOffset => (long) (RecordOffset + HeaderSize);
 
-        public FileInfo Unpack(Stream pakFile, DirectoryInfo unpackRoot) {
-            // using var sr = new StreamReader(pakFile, leaveOpen:true);
-            var tgtBasePath = Path.Combine(unpackRoot.FullName, Path.GetDirectoryName(FileName));
-            var di = Directory.CreateDirectory(tgtBasePath);
-            var tgtPath = Path.Combine(di.FullName, Path.GetFileName(FileName));
-            using var outFs = new FileStream(tgtPath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
+        private void Unpack(Stream pakFile, Stream outStream) {
             switch (CompressionMethod) {
                 case CompressionMethod.None:
                 {
                     
                     pakFile.Seek((long) DataOffset, SeekOrigin.Begin);
-                    pakFile.CopyStream(outFs, (long) RawSize);
-                    outFs.Flush();
+                    pakFile.CopyStream(outStream, (long) RawSize);
+                    outStream.Flush();
                     break;
                 }
                 case CompressionMethod.Zlib:
@@ -52,16 +47,32 @@ namespace UnPak.Core
                         pakFile.Seek(DataOffset + (long) compressionBlock.StartOffset, SeekOrigin.Begin);
                         using var memStream = new MemoryStream(blockSize);
                         pakFile.CopyStream(memStream, blockSize);
-                        outFs.Write(ZlibCompressionProvider.DecompressBytes(memStream.ToArray()));
+                        outStream.Write(ZlibCompressionProvider.DecompressBytes(memStream.ToArray()));
                         // using var dfStream = new DeflateStream(memStream, CompressionMode.Decompress, true);
                         // dfStream.CopyTo(outFs);
                     }
-                    outFs.Flush();
+                    outStream.Flush();
                     break;
                 }
                 default:
                     throw new NotImplementedException();
             }
+        }
+
+        public Stream Unpack(Stream pakFile) {
+            var memStream = new MemoryStream((int) RawSize);
+            Unpack(pakFile, memStream);
+            memStream.Seek(0, SeekOrigin.Begin);
+            return memStream;
+        }
+
+        public FileInfo Unpack(Stream pakFile, DirectoryInfo unpackRoot) {
+            // using var sr = new StreamReader(pakFile, leaveOpen:true);
+            var tgtBasePath = Path.Combine(unpackRoot.FullName, Path.GetDirectoryName(FileName));
+            var di = Directory.CreateDirectory(tgtBasePath);
+            var tgtPath = Path.Combine(di.FullName, Path.GetFileName(FileName));
+            using var outFs = new FileStream(tgtPath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
+            Unpack(pakFile, outFs);
             outFs.Flush(true);
 
             return new FileInfo(tgtPath);
