@@ -23,11 +23,11 @@ namespace UnPak.Core
 
         public FileInfo BuildFromDirectory(DirectoryInfo srcPath, FileInfo outputFile, PakFileCreationOptions opts = null) {
             opts ??= new PakFileCreationOptions();
-            using var outputStream =
-                new FileStream(outputFile.FullName, FileMode.Create, FileAccess.ReadWrite, FileShare.Read);
             var files = srcPath.EnumerateFiles("*", SearchOption.AllDirectories).ToList();
             files = files.OrderBy(f => f.Name).ToList();
             var inputFiles = files.ToDictionary(f => Path.GetRelativePath(srcPath.Parent.FullName, f.FullName), f => f);
+            using var outputStream =
+                new FileStream(outputFile.FullName, FileMode.Create, FileAccess.ReadWrite, FileShare.Read);
             var records = WriteDataFiles(inputFiles, outputStream, opts);
             WriteIndex(outputStream, records, opts);
             return new FileInfo(outputFile.FullName);
