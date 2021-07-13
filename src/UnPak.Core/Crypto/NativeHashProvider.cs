@@ -10,5 +10,11 @@ namespace UnPak.Core.Crypto
             var hash = hasher.ComputeHash(fs);
             return hash;
         }
+
+        public override byte[] GetSha1Hash(byte[] bytes) {
+            using var hasher = new SHA1CryptoServiceProvider();
+            var hash = hasher.ComputeHash(bytes);
+            return hash;
+        }
     }
 }

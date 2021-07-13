@@ -127,11 +127,12 @@ namespace UnPak.Core
                     foreach (var pair in compressedData) {
                         compDataStr.Write(pair.Value);
                     }
-                    var blockHash = _hashProvider.GetSha1Hash(compDataStr);
+                    var compData = compDataStr.ToArray();
+                    var blockHash = _hashProvider.GetSha1Hash(compData);
                     var compHeader = GetIndexRecord(0, fileLength, blockHash,
                         compression.Method, (uint) zlib.BlockSize, isEncrypted, blocks);
                     writer.Write(compHeader);
-                    writer.Write(compDataStr.ToArray());
+                    writer.Write(compData);
                     var cDataRecord = tgtStream.ToArray();
                     binaryWriter.Write(cDataRecord);
                     var compRecord = GetIndexRecord(curr, fileLength, blockHash, zlib.Method, (uint) zlib.BlockSize,

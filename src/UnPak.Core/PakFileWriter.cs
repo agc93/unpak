@@ -69,17 +69,18 @@ namespace UnPak.Core
                 indexStream.Write(pathBytes);
                 indexStream.Write(indexRecord);
             }
-            var indexHash = _hashProvider.GetSha1Hash(indexStream);
+            var fileIndex = indexStream.ToArray();
+            var indexHash = _hashProvider.GetSha1Hash(fileIndex);
             using var footerStream = new MemoryStream();
             using var writer = new BinaryWriter(footerStream, Encoding.UTF8, true);
             writer.WriteUInt32(opts.Magic);
             writer.WriteUInt32((uint) opts.ArchiveVersion);
             writer.WriteUInt64((ulong) indexOffset);
-            writer.WriteUInt64((ulong) indexStream.Length);
+            writer.WriteUInt64((ulong) fileIndex.Length);
             writer.Write(indexHash);
             writer.Close();
             
-            outWriter.Write(indexStream.ToArray());
+            outWriter.Write(fileIndex);
             outWriter.Write(footerStream.ToArray());
         }
     }

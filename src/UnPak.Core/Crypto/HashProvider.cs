@@ -11,6 +11,8 @@ namespace UnPak.Core.Crypto
         }
 
         public abstract byte[] GetSha1Hash(Stream fs);
+        public abstract byte[] GetSha1Hash(byte[] bytes);
+
         public string GetString(byte[] hash) {
             var chArrayLength = hash.Length * 2;
             var chArray = new char[chArrayLength];
