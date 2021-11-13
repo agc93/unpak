@@ -31,21 +31,35 @@ namespace UnPak.Console
             else if (File.Exists(settings.FolderPath) && Path.GetExtension(settings.FolderPath) is var fileExt && fileExt == ".pak") {
                 //time to unpack boys
                 var app = GetApp();
-                var args = new[] { "unpack", settings.FolderPath}.Concat(context.Remaining.Raw);
-                result = await app.RunAsync(args);
+                try {
+                    var args = new[] { "unpack", settings.FolderPath}.Concat(context.Remaining.Raw);
+                    result = await app.RunAsync(args);
+                }
+                catch {
+                    result = -1;
+                }
             } else if (Directory.Exists(settings.FolderPath) && Directory.EnumerateFileSystemEntries(settings.FolderPath).Any()) {
                 var di = new DirectoryInfo(settings.FolderPath);
                 //time to pack boys
                 var app = GetApp();
-                var info = new AppInfoService();
-                var args = new[] { "pack", settings.FolderPath}.Concat(context.Remaining.Raw);
-                result = await app.RunAsync(args);
+                try {
+                    var args = new[] { "pack", settings.FolderPath }.Concat(context.Remaining.Raw);
+                    result = await app.RunAsync(args);
+                }
+                catch {
+                    result = -1;
+                }
+                
                 // }
                 // return await app.RunAsync(args);
             }
             if (result != 0) {
-                WriteLine("It looks like there might have been an error running the pack command!");
+                WriteLine("It looks like there might have been an error running the pack/unpack command!");
                 WriteLine("You can press <ENTER> to close, or copy/screenshot any errors you find above to help isolating any bugs.");
+                WriteLine(string.Empty.PadLeft(9) + "Press <ENTER> to continue...");
+                ReadLine();
+            } else {
+                WriteLine();
                 WriteLine(string.Empty.PadLeft(9) + "Press <ENTER> to continue...");
                 ReadLine();
             }
