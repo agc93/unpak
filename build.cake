@@ -74,7 +74,7 @@ Task("Restore")
 	// Restore all NuGet packages.
 	Information("Restoring solution...");
 	foreach (var project in projects.AllProjectPaths) {
-		DotNetCoreRestore(project.FullPath);
+		DotNetRestore(project.FullPath);
 	}
 });
 
@@ -84,12 +84,12 @@ Task("Build")
 	.Does(() =>
 {
 	Information("Building solution...");
-	var settings = new DotNetCoreBuildSettings {
+	var settings = new DotNetBuildSettings {
 		Configuration = configuration,
 		NoIncremental = true,
 		ArgumentCustomization = args => args.Append($"/p:Version={packageVersion}")
 	};
-	DotNetCoreBuild(solutionPath, settings);
+	DotNetBuild(solutionPath, settings);
 });
 
 Task("Run-Unit-Tests")
@@ -99,12 +99,12 @@ Task("Run-Unit-Tests")
 	CreateDirectory(testResultsPath);
 	if (projects.TestProjects.Any()) {
 
-		var settings = new DotNetCoreTestSettings {
+		var settings = new DotNetTestSettings {
 			Configuration = configuration
 		};
 
 		foreach(var project in projects.TestProjects) {
-			DotNetCoreTest(project.Path.FullPath, settings);
+			DotNetTest(project.Path.FullPath, settings);
 		}
 	}
 });
@@ -115,7 +115,7 @@ Task("NuGet")
 {
     Information("Building NuGet package");
     CreateDirectory(artifacts + "package/");
-    var packSettings = new DotNetCorePackSettings {
+    var packSettings = new DotNetPackSettings {
         Configuration = configuration,
         NoBuild = true,
         OutputDirectory = $"{artifacts}package",
@@ -125,7 +125,7 @@ Task("NuGet")
     };
     foreach(var project in projects.SourceProjectPaths) {
         Information($"Packing {project.GetDirectoryName()}...");
-        DotNetCorePack(project.FullPath, packSettings);
+        DotNetPack(project.FullPath, packSettings);
     }
 });
 
@@ -138,7 +138,7 @@ Task("Publish-Runtime")
 	foreach (var project in projects.SourceProjects)
 	{
 		var projPath = project.Path.FullPath;
-		DotNetCorePublish(projPath, new DotNetCorePublishSettings {
+		DotNetPublish(projPath, new DotNetPublishSettings {
 			OutputDirectory = projectDir + "/dotnet-any",
 			Configuration = configuration,
 			PublishSingleFile = false,
@@ -149,7 +149,7 @@ Task("Publish-Runtime")
 			var runtimeDir = $"{projectDir}/{runtime}";
 			CreateDirectory(runtimeDir);
 			Information("Publishing for {0} runtime", runtime);
-			var settings = new DotNetCorePublishSettings {
+			var settings = new DotNetPublishSettings {
 				Runtime = runtime,
 				Configuration = configuration,
 				OutputDirectory = runtimeDir,
@@ -158,7 +158,7 @@ Task("Publish-Runtime")
 				IncludeNativeLibrariesForSelfExtract = true,
 				ArgumentCustomization = args => args.Append($"/p:Version={packageVersion}")
 			};
-			DotNetCorePublish(projPath, settings);
+			DotNetPublish(projPath, settings);
 			CreateDirectory($"{artifacts}archive");
 			Zip(runtimeDir, $"{artifacts}archive/upk-{runtime}.zip");
 		}
