@@ -19,7 +19,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
-    <IsPackable>false</IsPackable>
+    <IsPackable>true</IsPackable>
     <IsPublishable>true</IsPublishable>
     <DebugType>Embedded</DebugType>
   </PropertyGroup>
@@ -34,12 +34,12 @@
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>upk</ToolCommandName>
     <PackageProjectUrl>https://github.com/agc93/unpak</PackageProjectUrl>
-    <PackageDescription>A .NET Core global tool for packing and unpacking </PackageDescription>
+    <PackageDescription>A .NET global tool for packing and unpacking UE4 PAK files.</PackageDescription>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <Title>Nexus Uploader</Title>
+    <Title>UnPak CLI</Title>
     <Authors>agc93</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageId>NexusUploader</PackageId>
+    <PackageId>UnPak.Console</PackageId>
   </PropertyGroup>
 
 </Project>
