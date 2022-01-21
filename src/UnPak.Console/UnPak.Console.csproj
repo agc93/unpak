@@ -12,9 +12,13 @@
     <PackageReference Include="Scrutor" Version="3.3.0" />
     <PackageReference Include="Spectre.Cli.AppInfo" Version="0.2.0" />
     <PackageReference Include="Spectre.Cli.Extensions.DependencyInjection" Version="0.4.0" />
-    <PackageReference Include="Spectre.Console" Version="0.38.0" />
+    <PackageReference Include="Spectre.Console" Version="0.43.0" />
     <PackageReference Include="Spectre.Console.Extensions.Logging" Version="0.2.2-preview.0.5" />
   </ItemGroup>
+
+<!--  <ItemGroup>-->
+<!--    <ProjectReference Include="..\..\..\..\Spectre\Spectre.Cli.Extensions.DependencyInjection\src\Spectre.Cli.Extensions.DependencyInjection\Spectre.Cli.Extensions.DependencyInjection.csproj" />-->
+<!--  </ItemGroup>-->
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>

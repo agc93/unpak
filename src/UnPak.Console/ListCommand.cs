@@ -46,7 +46,7 @@ namespace UnPak.Console
                     table.AddRow(fileRecord.FileName, fileRecord.DataOffset.ToString(),
                         ((long) fileRecord.CompressedSize).Bytes().ToString());
                 }
-                _console.Render(table);
+                _console.Write(table);
             }
             return 0;
         }

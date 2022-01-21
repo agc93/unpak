@@ -18,8 +18,8 @@ namespace UnPak.Console
             
             public override ValidationResult Validate() {
                 #if DEBUG
-                EnableCompression.IsSet = true;
-                EnableCompression.Value = true;
+                // EnableCompression.IsSet = true;
+                // EnableCompression.Value = true;
                 #endif
                 FileRootPath = FileRootPath.TrimEnd('\\', '"');
                 /*if (!Debugger.IsAttached) {
@@ -27,7 +27,7 @@ namespace UnPak.Console
                 }*/
                 var dirSrv = new DirectoryService();
                 try {
-                    if (!DisableAutoRoot.IsSet || !DisableAutoRoot.Value) {
+                    if (!(DisableAutoRoot ?? false)) {
                         var packRoot = dirSrv.GetPackRoot(new DirectoryInfo(FileRootPath));
                         FileRootPath = packRoot.FullName;
                         if (!TargetFilePath.IsSet || string.IsNullOrWhiteSpace(TargetFilePath.Value)) {
@@ -58,10 +58,10 @@ namespace UnPak.Console
             public FlagValue<string> MountPoint { get; init; }
             
             [CommandOption("--no-auto")]
-            public FlagValue<bool> DisableAutoRoot { get; init; }
+            public bool? DisableAutoRoot { get; init; }
             
             [CommandOption("-z|--compress")]
-            public FlagValue<bool> EnableCompression { get; set; }
+            public bool? EnableCompression { get; set; }
         }
 
         public PackCommand(ILogger<PackCommand> logger, PakFileProvider fileProvider) {
@@ -72,7 +72,7 @@ namespace UnPak.Console
         public override Task<int> ExecuteAsync(CommandContext context, Settings settings) {
             var writer = _fileProvider.GetWriter();
             var opts = new PakFileCreationOptions(settings.ArchiveVersion.OrDefault(null), settings.MountPoint.OrDefault(), null) {
-                Compression = (settings.EnableCompression.IsSet && settings.EnableCompression.Value) ? new PackageCompression(CompressionMethod.Zlib) : null 
+                Compression = settings.EnableCompression ?? false ? new PackageCompression(CompressionMethod.Zlib) : null 
             };
             _logger.LogInformation($"Creating new PAK archive with version '{opts.ArchiveVersion}' at '{opts.MountPoint}' (magic: '{opts.Magic:x8}')");
             var result = writer.BuildFromDirectory(new DirectoryInfo(settings.FileRootPath), new FileInfo(settings.TargetFilePath.Value), opts);
