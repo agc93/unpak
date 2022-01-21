@@ -145,7 +145,7 @@ namespace UnPak.Core
         }
 
         private byte[] GetIndexRecord(long offset, (long compressedLength, long rawLength) size, byte[] hash, CompressionMethod compressionMethod, uint compressionBlockSize,
-            bool isEncrypted, IEnumerable<CompressionBlock> blocks = null) {
+            bool isEncrypted, IEnumerable<CompressionBlock>? blocks = null) {
             using var tgtStream = new MemoryStream();
             using var writer = new BinaryWriter(tgtStream, Encoding.ASCII);
             writer.WriteUInt64((ulong) offset);
@@ -154,8 +154,9 @@ namespace UnPak.Core
             writer.WriteUInt32((uint) compressionMethod); // compression method
             writer.Write(hash);
             if (compressionMethod != CompressionMethod.None && blocks != null) {
-                writer.WriteUInt32((uint) blocks.Count());
-                foreach (var block in blocks) {
+                var allBlocks = blocks.ToList();
+                writer.WriteUInt32((uint) allBlocks.Count);
+                foreach (var block in allBlocks) {
                     writer.WriteUInt64(block.StartOffset);
                     writer.WriteUInt64(block.EndOffset);
                 }

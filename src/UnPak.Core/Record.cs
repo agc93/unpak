@@ -29,7 +29,7 @@ namespace UnPak.Core
                 case CompressionMethod.None:
                 {
                     
-                    pakFile.Seek((long) DataOffset, SeekOrigin.Begin);
+                    pakFile.Seek(DataOffset, SeekOrigin.Begin);
                     pakFile.CopyStream(outStream, (long) RawSize);
                     outStream.Flush();
                     break;
@@ -68,7 +68,11 @@ namespace UnPak.Core
 
         public FileInfo Unpack(Stream pakFile, DirectoryInfo unpackRoot) {
             // using var sr = new StreamReader(pakFile, leaveOpen:true);
-            var tgtBasePath = Path.Combine(unpackRoot.FullName, Path.GetDirectoryName(FileName));
+            var dirName = Path.GetDirectoryName(FileName);
+            if (dirName == null) {
+                throw new ArgumentException($"Could not determine directory name from file name: {FileName}");
+            }
+            var tgtBasePath = Path.Combine(unpackRoot.FullName, dirName);
             var di = Directory.CreateDirectory(tgtBasePath);
             var tgtPath = Path.Combine(di.FullName, Path.GetFileName(FileName));
             using var outFs = new FileStream(tgtPath, FileMode.OpenOrCreate, FileAccess.ReadWrite);

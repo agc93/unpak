@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Text;
 using UnPak.Core.Crypto;
 using UnPak.Core.Diagnostics;
@@ -21,11 +20,11 @@ namespace UnPak.Core
             _opts = opts ?? new PakLayoutOptions();
         }
 
-        public FileInfo BuildFromDirectory(DirectoryInfo srcPath, FileInfo outputFile, PakFileCreationOptions opts = null) {
+        public FileInfo BuildFromDirectory(DirectoryInfo srcPath, FileInfo outputFile, PakFileCreationOptions? opts = null) {
             opts ??= new PakFileCreationOptions();
             var files = srcPath.EnumerateFiles("*", SearchOption.AllDirectories).ToList();
             files = files.OrderBy(f => f.Name).ToList();
-            var inputFiles = files.ToDictionary(f => Path.GetRelativePath(srcPath.Parent.FullName, f.FullName), f => f);
+            var inputFiles = files.ToDictionary(f => Path.GetRelativePath(srcPath.Parent?.FullName ?? srcPath.FullName, f.FullName), f => f);
             using var outputStream =
                 new FileStream(outputFile.FullName, FileMode.Create, FileAccess.ReadWrite, FileShare.Read);
             var records = WriteDataFiles(inputFiles, outputStream, opts);
@@ -33,10 +32,14 @@ namespace UnPak.Core
             return new FileInfo(outputFile.FullName);
         }
 
-        public void BuildFromFiles(Dictionary<string, FileInfo> files, FileInfo outputFile,
-            PakFileCreationOptions opts = null) {
+        private FileInfo BuildFromFiles(Dictionary<string, FileInfo> files, FileInfo outputFile,
+            PakFileCreationOptions? opts = null) {
             opts ??= new PakFileCreationOptions();
-            using var outputStream = outputFile.OpenWrite();
+            using var outputStream =
+                new FileStream(outputFile.FullName, FileMode.Create, FileAccess.ReadWrite, FileShare.Read);
+            var records = WriteDataFiles(files, outputStream, opts);
+            WriteIndex(outputStream, records, opts);
+            return new FileInfo(outputFile.FullName);
         }
 
         public Dictionary<string, byte[]> WriteDataFiles(Dictionary<string, FileInfo> srcFiles, FileStream outputStream, PakFileCreationOptions opts) {

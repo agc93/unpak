@@ -9,11 +9,11 @@ namespace UnPak.Core
     {
         private static readonly Encoding Utf8 = new UTF8Encoding(false);
 
-        public static string ReadPath(this BinaryReader reader) {
+        public static string? ReadPath(this BinaryReader reader) {
             return reader.ReadUEString(true);
         }
 
-        public static string ReadUEString(this BinaryReader reader, bool trimEnd = false)
+        public static string? ReadUEString(this BinaryReader reader, bool trimEnd = false)
         {
             if (reader.PeekChar() < 0)
                 return null;
@@ -28,7 +28,7 @@ namespace UnPak.Core
             var valueBytes = reader.ReadBytes(length);
 
             return trimEnd
-                ? Utf8.GetString(valueBytes, 0, valueBytes.Length - 1).TrimEnd(new char[] {(char) 0})
+                ? Utf8.GetString(valueBytes, 0, valueBytes.Length - 1).TrimEnd(new[] {(char) 0})
                 : Utf8.GetString(valueBytes, 0, valueBytes.Length - 1);
         }
     }
@@ -68,7 +68,7 @@ namespace UnPak.Core
             writer.Write(BitConverter.GetBytes(value));
         }
 
-        public static void WriteString(this BinaryWriter writer, string value, Encoding encoding = null) {
+        public static void WriteString(this BinaryWriter writer, string value, Encoding? encoding = null) {
             encoding ??= Encoding.ASCII;
             writer.Write(encoding.GetBytes(value));
         }
@@ -90,11 +90,11 @@ namespace UnPak.Core
             return writer;
         }
         
-        public static byte[] EncodePath(this string path, Encoding encoding = null) {
+        public static byte[] EncodePath(this string path, Encoding? encoding = null) {
             encoding ??= Encoding.UTF8;
             path = path.Replace(Path.DirectorySeparatorChar, '/');
-            var valueBytes = Encoding.UTF8.GetBytes(path).Concat(new byte[]{0x00});
-            var lengthBytes = BitConverter.GetBytes(valueBytes.Count());
+            var valueBytes = encoding.GetBytes(path).Concat(new byte[]{0x00}).ToList();
+            var lengthBytes = BitConverter.GetBytes(valueBytes.Count);
             return lengthBytes.Concat(valueBytes).ToArray();
         }
     }

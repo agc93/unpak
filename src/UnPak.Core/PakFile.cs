@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -7,17 +8,18 @@ namespace UnPak.Core
 {
     public class PakFile : IEnumerable<Record>
     {
-        public PakFile(string mountPoint, FileFooter fileFooter) {
+        [Obsolete("Provide file stream in other constructor!", true)]
+        public PakFile(string mountPoint, FileFooter fileFooter) : this(mountPoint, fileFooter, null!) {
+        }
+
+        public PakFile(string mountPoint, FileFooter fileFooter, Stream fileStream) {
+            FileStream = fileStream;
             MountPoint = mountPoint;
             FileFooter = fileFooter;
         }
 
-        public PakFile(string mountPoint, FileFooter fileFooter, Stream fileStream) : this(mountPoint, fileFooter) {
-            FileStream = fileStream;
-        }
-
         public FileFooter FileFooter { get; protected set; }
-        public Stream? FileStream { get; set; }
+        public Stream FileStream { get; set; }
 
         public string MountPoint { get; protected set; }
         public List<Record> Records { get; } = new List<Record>();
@@ -38,6 +40,7 @@ namespace UnPak.Core
         }
 
         private FileInfo? Unpack(string filePath, DirectoryInfo unpackRoot) {
+            //TODO: handle PakFile without FileStream
             return Unpack(filePath, FileStream, unpackRoot);
         }
 

@@ -5,6 +5,7 @@
     <IsPackable>true</IsPackable>
     <IsPublishable>false</IsPublishable>
     <DebugType>Embedded</DebugType>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>

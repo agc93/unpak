@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using UnPak.Core.Crypto;
 
@@ -7,33 +6,33 @@ namespace UnPak.Core
 {
     public class PakFileProvider
     {
-        private IEnumerable<IPakFormat> _formats;
+        private readonly IEnumerable<IPakFormat> _formats;
         private readonly IHashProvider? _hashProvider;
         private readonly IEnumerable<IFooterLayout> _footerLayouts;
-        private PakLayoutOptions? _opts;
+        private readonly PakLayoutOptions? _opts;
 
         public PakFileProvider(IEnumerable<IPakFormat> pakFormats, IEnumerable<IFooterLayout> footerLayouts, IHashProvider hashProvider, PakLayoutOptions opts) : this(pakFormats, footerLayouts, hashProvider) {
             _opts = opts;
         }
         
-        public PakFileProvider(IEnumerable<IPakFormat> pakFormats, IEnumerable<IFooterLayout> footerLayouts, IHashProvider hashProvider) : this(pakFormats) {
+        public PakFileProvider(IEnumerable<IPakFormat> pakFormats, IEnumerable<IFooterLayout> footerLayouts, IHashProvider hashProvider) : this(pakFormats, footerLayouts) {
             _hashProvider = hashProvider;
-            _footerLayouts = footerLayouts;
         }
 
-        public PakFileProvider(IEnumerable<IPakFormat> pakFormats) {
+        private PakFileProvider(IEnumerable<IPakFormat> pakFormats, IEnumerable<IFooterLayout> footerLayouts) {
+            _footerLayouts = footerLayouts;
             _formats = pakFormats;
         }
 
-        public PakFileReader GetReader(FileStream fileStream, PakLayoutOptions opts = null) {
+        public PakFileReader GetReader(FileStream fileStream, PakLayoutOptions? opts = null) {
             return new(fileStream, _formats, _footerLayouts, opts ?? _opts);
         }
         
-        public PakFileReader GetReader(FileInfo fileInfo, PakLayoutOptions opts = null) {
+        public PakFileReader GetReader(FileInfo fileInfo, PakLayoutOptions? opts = null) {
             return new(fileInfo.OpenRead(), _formats, _footerLayouts, opts ?? _opts);
         }
         
-        public PakFileWriter GetWriter(PakLayoutOptions opts = null) {
+        public PakFileWriter GetWriter(PakLayoutOptions? opts = null) {
             return new PakFileWriter(_formats, _hashProvider ?? new ManagedHashProvider(), opts ?? _opts);
         }
     }

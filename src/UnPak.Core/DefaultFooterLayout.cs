@@ -7,11 +7,11 @@ namespace UnPak.Core
     public class DefaultFooterLayout : IFooterLayout
     {
         public int FooterLength => 44;
-        public FileFooter ReadFooter(BinaryReader reader, PakLayoutOptions? options) {
+        public FileFooter? ReadFooter(BinaryReader reader, PakLayoutOptions? options) {
             var curr = reader.BaseStream.Position;
             reader.BaseStream.Seek(-20, SeekOrigin.End);
-            var temphash = reader.ReadChars(20);
-            if (temphash.Count(c => c == 0x0) > 4) {
+            var tempHash = reader.ReadChars(20);
+            if (tempHash.Count(c => c == 0x0) > 4) {
                 //this (probably) ain't it chief
                 return null;
             }

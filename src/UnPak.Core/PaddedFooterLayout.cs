@@ -8,7 +8,7 @@ namespace UnPak.Core
     {
         public int FooterLength => 44;
         private int HashLength => 20;
-        public FileFooter ReadFooter(BinaryReader reader, PakLayoutOptions? options) {
+        public FileFooter? ReadFooter(BinaryReader reader, PakLayoutOptions? options) {
             var curr = reader.BaseStream.Position;
             reader.BaseStream.Seek(-148, SeekOrigin.End);
             var temphash = reader.ReadChars(20);
