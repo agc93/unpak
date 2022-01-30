@@ -87,7 +87,7 @@ Task("Build")
 	var settings = new DotNetBuildSettings {
 		Configuration = configuration,
 		NoIncremental = true,
-		ArgumentCustomization = args => args.Append($"/p:Version={packageVersion}")
+		ArgumentCustomization = args => args.Append($"/p:Version={packageVersion}").Append("/p:AssemblyVersion=1.0.0.0")
 	};
 	DotNetBuild(solutionPath, settings);
 });
@@ -142,7 +142,8 @@ Task("Publish-Runtime")
 			OutputDirectory = projectDir + "/dotnet-any",
 			Configuration = configuration,
 			PublishSingleFile = false,
-			PublishTrimmed = false
+			PublishTrimmed = false,
+			ArgumentCustomization = args => args.Append($"/p:Version={packageVersion}").Append("/p:AssemblyVersion=1.0.0.0")
 		});
 		var runtimes = new[] { "win-x64", "linux-x64"};
 		foreach (var runtime in runtimes) {
@@ -156,7 +157,7 @@ Task("Publish-Runtime")
 				PublishSingleFile = true,
 				PublishTrimmed = true,
 				IncludeNativeLibrariesForSelfExtract = true,
-				ArgumentCustomization = args => args.Append($"/p:Version={packageVersion}")
+				ArgumentCustomization = args => args.Append($"/p:Version={packageVersion}").Append("/p:AssemblyVersion=1.0.0.0")
 			};
 			DotNetPublish(projPath, settings);
 			CreateDirectory($"{artifacts}archive");

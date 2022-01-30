@@ -15,9 +15,16 @@ namespace UnPak.Console
     {
         internal static CommandApp GetApp() {
             var app = new CommandApp(new DependencyInjectionRegistrar(GetServices()));
+            var level = GetLogLevel();
             // app.SetDefaultCommand<PackCommand>();
             app.Configure(c => {
+                #if DEBUG
                 c.PropagateExceptions();
+                #else
+                if (level < LogLevel.Information) {
+                    c.PropagateExceptions();
+                }
+                #endif
                 c.SetApplicationName("upk");
                 c.AddCommand<PackCommand>("pack");
                 c.AddCommand<UnpackCommand>("unpack");
