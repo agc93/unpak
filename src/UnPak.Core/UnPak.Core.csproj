@@ -11,5 +11,16 @@
   <ItemGroup>
     <PackageReference Include="SharpZipLib" Version="1.3.2" />
   </ItemGroup>
+  
+  <PropertyGroup>
+    <Description>Extensible and configurable support for reading, packing, and unpacking UE4 `pak` files.</Description>
+    <Authors>agc93</Authors>
+    <Copyright>© Alistair Chapman 2022</Copyright>
+    <PackageTags>modding;ue4;</PackageTags>
+    <RepositoryUrl>https://github.com/agc93/unpak</RepositoryUrl>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/agc93/unpak</PackageProjectUrl>
+  </PropertyGroup>
 
 </Project>

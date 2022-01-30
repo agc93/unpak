@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net5.0</TargetFramework>
+        <ImplicitUsings>disable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <IsPackable>true</IsPackable>
+        <IsPublishable>false</IsPublishable>
+        <DebugType>Embedded</DebugType>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\UnPak.Core\UnPak.Core.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.Extensions.FileProviders.Abstractions" Version="5.0.0" />
+    </ItemGroup>
+
+    <PropertyGroup>
+        <Description>A companion library for UnPak that includes an IFileProvider implementation to provide files from a PAK file.</Description>
+        <Authors>agc93</Authors>
+        <Copyright>© Alistair Chapman 2022</Copyright>
+        <PackageTags>modding;</PackageTags>
+        <RepositoryUrl>https://github.com/agc93/unpak</RepositoryUrl>
+        <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageProjectUrl>https://github.com/agc93/unpak</PackageProjectUrl>
+    </PropertyGroup>
+
+</Project>
