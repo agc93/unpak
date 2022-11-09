@@ -87,12 +87,13 @@ namespace UnPak.Core
         }
 
         public byte[] WriteRecord(BinaryWriter binaryWriter, ArchiveFile archiveFile, bool isEncrypted, PackageCompression? compression) {
-            var file = archiveFile.File;
             var curr = binaryWriter.BaseStream.Position;
+            using var fileStream = archiveFile.GetData();
             //var size = file.Length;
             //var recordBytes = new byte[53 + file.Length];
-            var hash = _hashProvider.GetSha1Hash(file);
-            using var tgtStream = new MemoryStream((int) (53 + file.Length));
+            var hash = _hashProvider.GetSha1Hash(fileStream);
+            fileStream.Seek(0, SeekOrigin.Begin);
+            using var tgtStream = new MemoryStream((int) (53 + fileStream.Length));
             using var writer = new BinaryWriter(tgtStream, Encoding.ASCII, true);
             
             switch (compression?.Method) {
@@ -101,25 +102,26 @@ namespace UnPak.Core
                 {
                     // using var tgtStream = new MemoryStream((int) (53 + file.Length));
                     // using var writer = new BinaryWriter(tgtStream, Encoding.ASCII, true);
-                    var header = GetIndexRecord(0, (file.Length, file.Length), hash, compression?.Method ?? CompressionMethod.None, 0, isEncrypted);
+                    var header = GetIndexRecord(0, (fileStream.Length, fileStream.Length), hash, compression?.Method ?? CompressionMethod.None, 0, isEncrypted);
                     writer.Write(header);
-                    writer.WriteFile(file);
+                    writer.WriteStream(fileStream, 0);
+                    // writer.WriteFile(file);
                     writer.Flush();
                     tgtStream.CopyTo(binaryWriter.BaseStream);
                      var dataRecord = tgtStream.ToArray();
                      binaryWriter.Write(dataRecord);
             
-                    var indexRecord = GetIndexRecord(curr, (file.Length, file.Length), hash, CompressionMethod.None, 0, isEncrypted);
+                    var indexRecord = GetIndexRecord(curr, (fileStream.Length, fileStream.Length), hash, CompressionMethod.None, 0, isEncrypted);
                     return indexRecord;
                 }
                 case CompressionMethod.Zlib:
                 {
                     var zlib = new ZlibCompressionProvider(compression);
-                    using var fs = zlib.GetStream(file);
-                    var compressedData = zlib.CompressFile(fs, 0).ToList();
+                    
+                    var compressedData = zlib.CompressFile(fileStream, 0).ToList();
                     var compressedSize = compressedData.Sum(d => d.Value.Length);
                     var blocks = compressedData.Select(c => c.Key).ToList();
-                    var fileLength = ((long) compressedSize, file.Length);
+                    var fileLength = ((long) compressedSize, fileStream.Length);
                     var firstOffset = (ulong) (curr + 53 + 4 + blocks.Count * 16);
                     // that's the current position + header + block count + (each block start:end pair is 16 bytes)
                     blocks = blocks.OffsetBy(firstOffset).ToList();

@@ -51,7 +51,24 @@ namespace UnPak.Core
             var records = new Dictionary<string, byte[]>();
             using var writer = new BinaryWriter(outputStream, Encoding.ASCII, true);
             foreach (var (relPath, fileInfo) in srcFiles) {
-                var file = new ArchiveFile { File = fileInfo, Path = relPath };
+                var file = new ArchiveFile(relPath) { File = fileInfo };
+                var record = format.WriteRecord(writer, file, false, opts?.Compression);
+                records.Add(relPath, record);
+            }
+
+            return records;
+        }
+        
+        public Dictionary<string, byte[]> WriteData(Dictionary<string, FileInfo> srcFiles, FileStream outputStream, PakFileCreationOptions opts) {
+            var format = _formats.GetFormat(SupportedOperations.Write, opts.ArchiveVersion);
+            if (format == null) {
+                throw new FormatNotSupportedException(opts.ArchiveVersion);
+            }
+            
+            var records = new Dictionary<string, byte[]>();
+            using var writer = new BinaryWriter(outputStream, Encoding.ASCII, true);
+            foreach (var (relPath, fileInfo) in srcFiles) {
+                var file = new ArchiveFile(relPath) { File = fileInfo };
                 var record = format.WriteRecord(writer, file, false, opts?.Compression);
                 records.Add(relPath, record);
             }

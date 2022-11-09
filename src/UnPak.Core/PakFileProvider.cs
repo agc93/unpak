@@ -35,5 +35,15 @@ namespace UnPak.Core
         public PakFileWriter GetWriter(PakLayoutOptions? opts = null) {
             return new PakFileWriter(_formats, _hashProvider ?? new ManagedHashProvider(), opts ?? _opts);
         }
+        
+        public static PakFileProvider GetDefaultProvider() {
+            var crypto = new ManagedHashProvider();
+            var provider =
+                new PakFileProvider(
+                    new IPakFormat[]
+                        { new PakVersion3Format(crypto), new PakVersion4Format(), new PakVersion8Format(crypto) },
+                    new IFooterLayout[] { new DefaultFooterLayout(), new PaddedFooterLayout() }, crypto);
+            return provider;
+        }
     }
 }

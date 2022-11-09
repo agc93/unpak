@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Security.Cryptography;
+#pragma warning disable SYSLIB0021
 
 namespace UnPak.Core.Crypto
 {

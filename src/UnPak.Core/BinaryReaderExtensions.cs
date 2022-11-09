@@ -79,6 +79,13 @@ namespace UnPak.Core
             using var fs = fi.OpenRead();
             fs.CopyTo(writer.BaseStream);
         }
+
+        public static void WriteStream(this BinaryWriter writer, Stream str, long? startPos = null) {
+            if (startPos.HasValue && str.Position != startPos.Value) {
+                str.Seek(startPos.Value, SeekOrigin.Begin);
+            }
+            str.CopyTo(writer.BaseStream);
+        }
         
         public static BinaryWriter WritePath(this BinaryWriter writer, string path) {
             path = path.Replace(Path.PathSeparator, '/');
