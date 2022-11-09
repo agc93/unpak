@@ -32,7 +32,16 @@ namespace UnPak.Core
             return new FileInfo(outputFile.FullName);
         }
 
-        private FileInfo BuildFromFiles(Dictionary<string, FileInfo> files, FileInfo outputFile,
+        public Stream BuildFromStreams(Dictionary<string, Stream> rawFiles, Stream? outputStream = null,
+            PakFileCreationOptions? opts = null) {
+            opts ??= new PakFileCreationOptions();
+            outputStream ??= new MemoryStream();
+            var records = WriteData(rawFiles, outputStream, opts);
+            WriteIndex(outputStream, records, opts);
+            return outputStream;
+        }
+
+        public FileInfo BuildFromFiles(Dictionary<string, FileInfo> files, FileInfo outputFile,
             PakFileCreationOptions? opts = null) {
             opts ??= new PakFileCreationOptions();
             using var outputStream =
@@ -42,7 +51,7 @@ namespace UnPak.Core
             return new FileInfo(outputFile.FullName);
         }
 
-        public Dictionary<string, byte[]> WriteDataFiles(Dictionary<string, FileInfo> srcFiles, FileStream outputStream, PakFileCreationOptions opts) {
+        protected Dictionary<string, byte[]> WriteDataFiles(Dictionary<string, FileInfo> srcFiles, FileStream outputStream, PakFileCreationOptions opts) {
             var format = _formats.GetFormat(SupportedOperations.Write, opts.ArchiveVersion);
             if (format == null) {
                 throw new FormatNotSupportedException(opts.ArchiveVersion);
@@ -58,8 +67,8 @@ namespace UnPak.Core
 
             return records;
         }
-        
-        public Dictionary<string, byte[]> WriteData(Dictionary<string, Stream> srcData, FileStream outputStream, PakFileCreationOptions opts) {
+
+        protected Dictionary<string, byte[]> WriteData(Dictionary<string, Stream> srcData, Stream outputStream, PakFileCreationOptions opts) {
             var format = _formats.GetFormat(SupportedOperations.Write, opts.ArchiveVersion);
             if (format == null) {
                 throw new FormatNotSupportedException(opts.ArchiveVersion);
@@ -72,11 +81,10 @@ namespace UnPak.Core
                 var record = format.WriteRecord(writer, file, false, opts?.Compression);
                 records.Add(relPath, record);
             }
-
             return records;
         }
 
-        private void WriteIndex(Stream outWriter, Dictionary<string, byte[]> records, PakFileCreationOptions opts) {
+        protected void WriteIndex(Stream outWriter, Dictionary<string, byte[]> records, PakFileCreationOptions opts) {
             var indexOffset = outWriter.Position;
             using var indexStream = new MemoryStream();
             var mountPoint = opts.MountPoint.EncodePath();
